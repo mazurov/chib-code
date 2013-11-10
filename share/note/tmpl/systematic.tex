@@ -1,0 +1,22 @@
+{{#header?}}
+\begin{table}[H]
+\centering
+\caption{\small {{title}}}
+{{/header?}}
+{{#subtable?}}\subtable[${{first}} < p_T^{\Y1S} < {{last}} \gevc$]{ {{/subtable?}}
+	\scalebox{ {{scale}} }{
+	\begin{tabular}{lc{{alignment}}}\toprule
+	&& \multicolumn{ {{nlevel0}} }{c}{\Y{{ns}}S transverse momentum interval, \gevc} \\
+	{{#bins}} && \multicolumn{ {{nlevel1}} }{c}{ {{low}} --- {{high}} } {{/bins}} \\ 
+	{{#lines1}}\cmidrule{ {{low}}-{{high}} }{{/lines1}}
+	% {{lines}}
+	% {{years}} \\
+	% \midrule
+	\bottomrule
+	\end{tabular}
+	}
+{{#subtable?}} } {{/subtable?}}
+{{#footer?}}
+\label{tab:syst:{{label}}}
+\end{table}
+{{/footer?}}

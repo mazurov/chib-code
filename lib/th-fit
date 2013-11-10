@@ -1,0 +1,169 @@
+#!/usr/bin/env python
+# Usage: th fit
+# Summary: Fit models
+# Help: th fit -h
+
+# import sys
+import argparse
+import os
+import imp
+import shelve
+import ROOT
+from AnalysisPython import LHCbStyle  # noqa
+
+from th import tools
+from th.log import Logger
+from th.model import source
+
+from IPython import embed as shell
+
+
+def get_cli_args():
+    parser = argparse.ArgumentParser(description='Process some integers.')
+    parser.add_argument(
+        '--complete',  help='Show completion list', action='store_true')
+    parser.add_argument(
+        '-i', "--interective",  help='Interective session',
+        action='store_true')
+    parser.add_argument(
+        '--decay',  help='Decay name', choices=['ups', '1s', '2s', '3s'])
+    parser.add_argument(
+        '--year',  help='Show completion list',
+        choices=['all', '2011', '2012'])
+    parser.add_argument(
+        '--ptbegin',  help='Start p_T', type=int)
+    parser.add_argument(
+        '--ptend',  help='End p_T', type=int)
+    return parser.parse_args()
+
+
+def get_py_root():
+    return os.path.join(
+        os.environ["_TH_ROOT"], "lib", "python", "th", "fit")
+
+
+def get_data_root():
+    return os.path.join(
+        os.environ["_TH_ROOT"], "var", "data")
+
+
+def get_figures_root():
+    return os.path.join(
+        os.environ["_TH_ROOT"], "var", "figures")
+
+
+def get_cfg(name):
+    file_name = os.path.join(
+        os.environ['_TH_ROOT'], 'share', 'fit', '%s.json' % name)
+    return tools.json(file_name)
+
+
+def get_fitter(name):
+    full_name = "th.fit.%s" % name
+    path = os.path.join(get_py_root(), "%s.py" % name)
+
+    return imp.load_source(full_name, path)
+
+
+def complete():
+    print "--decay=ups"
+    print "--decay=1s"
+    print "--decay=2s"
+    print "--decay=3s"
+    print "--year"
+    print "--ptbegin"
+    print "--ptend"
+
+
+def save(name, model, year, interval):
+    db_path = os.path.join(get_data_root(), name + ".db")
+    tools.create_path(db_path)
+
+    db = shelve.open(db_path)
+
+    db_year = db.get(year, {})
+    db_year[interval] = model.params()
+    db[year] = db_year
+
+    print db
+    db.close()
+
+    figure = os.path.join(get_figures_root(), name,
+                          "f{0}_{1}_{2}.pdf".format(year,
+                                                    interval[0], interval[1]))
+    tools.create_path(figure)
+    model.canvas.SaveAs(figure)
+
+
+def main():
+    def fit():
+        model.fitData()
+        print(model)
+
+        if cfg['save?']:
+            save(cfg['name'], model, cli_args.year,
+                (cli_args.ptbegin, cli_args.ptend))
+
+        if model.status:
+            log.info("OK")
+        else:
+            log.err("BAD")
+
+    log = Logger()
+    cli_args = get_cli_args()
+    if cli_args.complete:
+        complete()
+        exit(0)
+    tuples_cfg = get_cfg("tuples")
+
+    if cli_args.year in tuples_cfg:
+        tuples = [tuples_cfg[cli_args.year]]
+    else:  # all
+        tuples = [tuples_cfg[year] for year in ['2011', '2012']]
+
+    cfg = get_cfg(cli_args.decay)
+    tree = ROOT.TChain(cfg["tree"])
+    for file_name in tuples:
+        tree.Add(os.path.join(get_data_root(), file_name))
+
+    fitter = get_fitter(cli_args.decay)
+
+    canvas = ROOT.TCanvas("c_fit",
+                          "{year} {start}-{end} {name}".format(
+                              year=cli_args.year,
+                              start=cli_args.ptbegin,
+                              end=cli_args.ptend,
+                              name=cfg["name"])
+                          )
+    cut = cfg['cut']
+    cut["pt_ups"] = [cli_args.ptbegin, cli_args.ptend]
+
+    log.info("Cut: %s" % tools.cut_dict2str(cfg['cut']))
+
+    if cfg["unbinned?"]:
+        data = source.dataset(tree=tree,
+                              cut=cut,
+                              field=cfg['field'],
+                              has_splot=cfg['splot?'])
+    else:
+        data = source.histogram(tree=tree,
+                                cut=cut,
+                                field=cfg['field'],
+                                nbins=cfg['nbins'])
+
+    model = fitter.prepare_model(
+        canvas=canvas,
+        data=data,
+        interval=cfg['cut'][cfg['field']],
+        nbins=cfg['nbins'],
+        name=cfg['name'],
+        has_splot=cfg['splot?']
+    )
+
+    fit()
+
+    if cli_args.interective or not model.status:
+        shell()
+
+if __name__ == '__main__':
+    main()

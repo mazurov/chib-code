@@ -1,0 +1,118 @@
+#!/usr/bin/env python
+# Usage: th fit
+# Summary: Fit models
+# Help: th fit -h
+
+# import sys
+import os
+import os.path
+# from os.path import isfile, join
+import argparse
+from IPython import embed as shell
+
+import th.note  # noqa
+from th import tools
+
+import imp
+
+
+def get_cli_args():
+    parser = argparse.ArgumentParser(
+        description='Generate reports: latex tables and plots.')
+    parser.add_argument(
+        '--complete',  help='Show completion list', action='store_true')
+    parser.add_argument(
+        '--name',  help='Report name')
+    return parser.parse_args()
+
+
+def get_py_root():
+    return os.path.join(
+        os.environ["_TH_ROOT"], "lib", "python", "th", "note")
+
+
+def get_cfg_root():
+    return os.path.join(
+        os.environ["_TH_ROOT"], "share", "note", "configs")
+
+
+def get_cfg(name):
+    path = os.path.join(get_cfg_root(), "%s.json" % name)
+    if os.path.isfile(path):
+        return tools.json(path)
+    else:
+        return {}
+
+
+def get_reports():
+    ret = []
+    path = get_py_root()
+    for entry in os.listdir(path):
+        if os.path.isfile(os.path.join(path, entry)):
+            ret.append(os.path.basename(entry).split('.')[0])
+
+    return ret
+
+
+def complete():
+    for entry in get_reports():
+        print "--name=%s" % entry
+
+
+def get_generator(name):
+    full_name = "th.note.%s" % name
+    path = os.path.join(get_py_root(), "%s.py" % name)
+
+    return imp.load_source(full_name, path)
+
+
+def main():
+    cli_args = get_cli_args()
+    if cli_args.complete:
+        complete()
+        exit(0)
+
+    generator = get_generator(cli_args.name)
+    generator.run(cfg=get_cfg(cli_args.name))
+    shell()
+
+
+if __name__ == '__main__':
+    main()
+
+# set -e
+
+# Provide th completions
+# if [ "$1" = "--complete" ]; then
+#   echo --sh
+#   echo --no-sh
+#   exit
+# fi
+
+# if [ "$1" = "--sh" ]; then
+#   sh=1
+#   shift
+# elif [ "$1" = "--no-sh" ]; then
+#   nosh=1
+#   shift
+# fi
+
+# shopt -s nullglob
+
+# { for path in ${PATH//:/$'\n'}; do
+#     for command in "${path}/th-"*; do
+# command="${command##*th-}"
+#       if [ -n "$sh" ]; then
+#         if [ ${command:0:3} = "sh-" ]; then
+# echo ${command##sh-}
+#         fi
+#       elif [ -n "$nosh" ]; then
+#         if [ ${command:0:3} != "sh-" ]; then
+# echo ${command##sh-}
+#         fi
+#       else
+# echo ${command##sh-}
+#       fi
+#     done
+#   done
+# } | sort | uniq

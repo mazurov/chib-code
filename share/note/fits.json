@@ -1,0 +1,24 @@
+{
+	"fields": {
+		"N1S": "N_{\\Y1S}",
+		"N2S": "N_{\\Y2S}",
+		"N3S": "N_{\\Y3S}"
+	},
+
+	"dbs": {
+		"ups": "ups/v1.db",
+		"1s": "1s/v1.db",		
+		"2s": "2s/v1.db",
+		"3s": "2s/v1.db"
+	},
+
+	"profiles": {
+		"ups_nominal": {
+			"title": "Nominal fits fos $\\Upsilon",
+			"label": "ups:nominal",
+			"db": "ups",
+			"binning": [[6,8]],
+			"rows": [["N1S", "N2S", "N3S"]]
+		}
+	}
+}
