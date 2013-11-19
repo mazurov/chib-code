@@ -1,12 +1,24 @@
 {
+	"binspertable": 4,
 	"fields": {
-		"N1S": "N_{\\Y1S}",
-		"N2S": "N_{\\Y2S}",
-		"N3S": "N_{\\Y3S}"
+		"N1S": "$N_{\\Y1S}$",
+		"N2S": "$N_{\\Y2S}$",
+		"N3S": "$N_{\\Y3S}$",
+		"B": "B",
+		"m1s": {"title":"$\\mu_{\\Y1S}$, \\mevcc", "scale": 1000},
+		"sigma": {"title":"$\\sigma_{\\Y1S}$, \\mevcc", "scale": 1000},
+		"tau_bg": "$\\tau$",
+		"mean_b1_1p": {"title": "$\\mu_{\\chiboneOneP}$","scale": 1000},
+		"chi2ndf": {"title": "$\\chi^2/ndf$", "ndigits": 2},
+		"chi2": {"title": "$\\chi^2$", "ndigits": 2},
+		"ndf": {"title": "ndf", "ndigits": 2},
+		"ndf": {"title": "ndf", "ndigits": 2},
+		"perbin": {"title": "\\mevc per bin"},
+		"prob": {"title": "Fit propability, \\%", "ndigits": 2, "scale": 100}
 	},
 
 	"dbs": {
-		"ups": "ups/v1.db",
+		"ups": "ups/v2.db",
 		"1s": "1s/v1.db",		
 		"2s": "2s/v1.db",
 		"3s": "2s/v1.db"
@@ -14,11 +26,22 @@
 
 	"profiles": {
 		"ups_nominal": {
-			"title": "Nominal fits fos $\\Upsilon",
-			"label": "ups:nominal",
+			"title": "\\mumu invariant mass data fit parameters",
+			"label": "ups:nominal2",	
 			"db": "ups",
-			"binning": [[6,8]],
-			"rows": [["N1S", "N2S", "N3S"]]
-		}
+			"binning": [[6,40]],
+			"groups": [["N1S", "N2S", "N3S"],["B"], ["m1s","sigma"], ["chi2ndf", "prob"]],
+			"scale": 0.8,
+			"pt": "\\mumu"
+		},
+		"ups_fits": {
+			"title": "\\mumu invariant mass data fit parameters",
+			"label": "upsilon:result:fits",	
+			"db": "ups",
+			"binning": [[6,8], [8,10], [10,12], [12,14], [14,18], [18,22], [22,40]],
+			"groups": [["N1S", "N2S", "N3S"],["B"], ["sigma"], ["tau_bg"], ["chi2ndf","chi2","ndf", "perbin","prob"]],
+			"scale": 0.5,
+			"pt": "\\mumu"
+		}		
 	}
 }

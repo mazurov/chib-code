@@ -11,6 +11,7 @@ import argparse
 from IPython import embed as shell
 
 import th.note  # noqa
+from th.tmpl import tex_renderer
 from th import tools
 
 import imp
@@ -23,6 +24,10 @@ def get_cli_args():
         '--complete',  help='Show completion list', action='store_true')
     parser.add_argument(
         '--name',  help='Report name')
+
+    parser.add_argument(
+        '--profile',  help='Profile name')
+
     return parser.parse_args()
 
 
@@ -33,7 +38,7 @@ def get_py_root():
 
 def get_cfg_root():
     return os.path.join(
-        os.environ["_TH_ROOT"], "share", "note", "configs")
+        os.environ["_TH_ROOT"], "share", "note")
 
 
 def get_cfg(name):
@@ -57,6 +62,7 @@ def get_reports():
 def complete():
     for entry in get_reports():
         print "--name=%s" % entry
+    print("--profile")
 
 
 def get_generator(name):
@@ -73,46 +79,11 @@ def main():
         exit(0)
 
     generator = get_generator(cli_args.name)
-    generator.run(cfg=get_cfg(cli_args.name))
-    shell()
+    generator.run(cfg=get_cfg(cli_args.name),
+                  renderer=tex_renderer(),
+                  name=cli_args.profile)
+    # shell()
 
 
 if __name__ == '__main__':
     main()
-
-# set -e
-
-# Provide th completions
-# if [ "$1" = "--complete" ]; then
-#   echo --sh
-#   echo --no-sh
-#   exit
-# fi
-
-# if [ "$1" = "--sh" ]; then
-#   sh=1
-#   shift
-# elif [ "$1" = "--no-sh" ]; then
-#   nosh=1
-#   shift
-# fi
-
-# shopt -s nullglob
-
-# { for path in ${PATH//:/$'\n'}; do
-#     for command in "${path}/th-"*; do
-# command="${command##*th-}"
-#       if [ -n "$sh" ]; then
-#         if [ ${command:0:3} = "sh-" ]; then
-# echo ${command##sh-}
-#         fi
-#       elif [ -n "$nosh" ]; then
-#         if [ ${command:0:3} != "sh-" ]; then
-# echo ${command##sh-}
-#         fi
-#       else
-# echo ${command##sh-}
-#       fi
-#     done
-#   done
-# } | sort | uniq
