@@ -1,0 +1,125 @@
+#!/usr/bin/env python
+
+import os
+import os.path
+from th import tools
+# from th.model.selector import Selector
+import ROOT
+from ROOT import TVector3
+from ROOT import TLorentzVector
+from IPython import embed as shell  # noqa
+from array import array
+from math import cos
+
+
+def get_data_file(name):
+    return os.path.join(
+        os.environ["_TH_ROOT"], "var", "data", name)
+
+
+def get_cfg(name):
+    file_name = os.path.join(
+        os.environ['_TH_ROOT'], 'share', 'fit', '%s.json' % name)
+    return tools.json(file_name)
+
+
+def main():
+    cfg_tuples = get_cfg("tuples")
+    chain = ROOT.TChain("ChibAlg/Chib")
+    chain.Add(get_data_file(cfg_tuples["mc"]))
+
+    cfg_cuts = get_cfg("mc1s")
+
+    chain.Draw(">>mc_elist", tools.cut_dict2str(cfg_cuts["cut"]), "entrylist")
+    mc_elist = ROOT.gROOT.FindObject("mc_elist")
+
+    e_chib = array('d', [0])
+    e_y = array('d', [0])
+    e_mup = array('d', [0])
+    e_mum = array('d', [0])
+
+    px_cb = array('d', [0])
+    py_cb = array('d', [0])
+    pz_cb = array('d', [0])
+
+    px_y = array('d', [0])
+    py_y = array('d', [0])
+    pz_y = array('d', [0])
+
+    px_mup = array('d', [0])
+    py_mup = array('d', [0])
+    pz_mup = array('d', [0])
+
+    px_mum = array('d', [0])
+    py_mum = array('d', [0])
+    pz_mum = array('d', [0])
+
+    lv01 = array('d', [0])
+
+    chain.SetBranchAddress("lv01", lv01)
+
+    chain.SetBranchAddress("e_chib", e_chib)
+    chain.SetBranchAddress("e_y", e_y)
+
+    chain.SetBranchAddress("px_cb", px_cb)
+    chain.SetBranchAddress("py_cb", py_cb)
+    chain.SetBranchAddress("pz_cb", pz_cb)
+
+    chain.SetBranchAddress("px_y", px_y)
+    chain.SetBranchAddress("py_y", py_y)
+    chain.SetBranchAddress("pz_y", pz_y)
+
+    chain.SetBranchAddress("px_mup", px_mup)
+    chain.SetBranchAddress("py_mup", py_mup)
+    chain.SetBranchAddress("pz_mup", pz_mup)
+
+    chain.SetBranchAddress("px_mum", px_mum)
+    chain.SetBranchAddress("py_mum", py_mum)
+    chain.SetBranchAddress("pz_mum", pz_mum)
+
+    for i in range(mc_elist.GetN()):
+        chain.GetEntry(i)
+
+        # Lab
+        v_chib = TVector3(px_cb[0], py_cb[0], pz_cb[0])
+        v_mup = TVector3(px_mup[0], px_mup[0], px_mup[0])
+        v_mum = TVector3(px_mum[0], px_mum[0], px_mum[0])
+
+        # for boosting to chib lab
+        v_bchib = TVector3(-px_cb[0] / e_chib[0],
+                           -py_cb[0] / e_chib[0], pz_cb[0] / e_chib[0])
+        # v_ups = TVector3(px_y, py_y, pz_y)
+
+        # boosting
+        lv_ups = TLorentzVector(px_y[0], py_y[0], pz_y[0], e_y[0])
+        lv_mup = TLorentzVector(px_mup[0], py_mup[0], pz_mup[0], e_mup[0])
+        lv_mum = TLorentzVector(px_mum[0], py_mum[0], pz_mum[0], e_mum[0])
+
+        lv_ups.Boost(v_bchib)
+        lv_mup.Boost(v_mup)
+        lv_mum.Boost(v_mum)
+
+        v_ups_chib = TVector3(lv_ups.Px(), lv_ups.Py(), lv_ups.Pz())
+        v_mup_chib = TVector3(lv_mup.Px(), lv_mup.Py(), lv_mup.Pz())
+        v_mum_chib = TVector3(lv_mum.Px(), lv_mum.Py(), lv_mum.Pz())
+
+        # First result
+        theta_chib = v_ups_chib.Angle(v_chib)
+
+        n_chib = v_chib.Unit()
+        n_ups = v_ups_chib.Unit()
+        n_mup = v_mup_chib.Unit()
+        n_mum = v_mum_chib.Unit()
+
+        n_perp_ups = n_mup.Cross(nmum)
+        n_perp_chib = n_ups.Cross(nchic)
+
+        cosphi = n_perp_chib.Dot(n_perp_ups)
+
+    # shell()
+    # selector = Selector(selection=cfg_cuts, columns=["dmplusm1s"])
+    shell()
+    # chain.Process(selector)
+
+if __name__ == '__main__':
+    main()

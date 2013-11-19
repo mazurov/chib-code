@@ -1,0 +1,36 @@
+{
+    "nbins": 85,
+    "is_unbinned": true,
+    "cut": {
+        "dm": [0, 2]
+        , "mups_dtf": [9.310, 9.600]
+        , "pt_ups": [6, null]
+        , "pt_g": [0.6, null]
+        , "lv01": [0, null]
+        , "c2_dtf": [0, 4]
+        , "dll_min": [0, null]
+        , "minprob": [0.5, null]
+        , "y":[2, 4.5]
+        , "true_cb_ups1s": 1
+        , "true_cb_ups1s_y": 1
+        , "true_cb_ups1s_g": 1
+        ,"(Ups_l0tos & 2)": 2
+        ,"(Ups_l1tos & 2)": 2
+        ,"(Ups_l2tos & 2)": 2
+    },
+    "ucut": {
+        "c2_dtf": [0, 4]
+        , "dll_min": [0, null]
+        , "y":[2, 4.5]
+        , "true_y1s": 1
+        , "minprob": [0.5, null]
+        , "(Ups_l0tos & 2)": 2
+        , "(Ups_l1tos & 2)": 2
+        , "(Ups_l2tos & 2)": 2
+    },
+    "xaxis" : {
+        "1": [9.75, 10.15, 40],
+        "2": [10, 10.6, 60],
+        "3": [10.2, 10.9, 70]
+    }
+}
