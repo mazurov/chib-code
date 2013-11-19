@@ -3,12 +3,31 @@
 # Summary: Fit models
 # Help: th fit -h
 
+"""Fit.
+
+Usage:
+  fit --complete
+  fit [-i] --decay=<decay> --year=<year>
+       --ptbegin=<ptbegin>
+       --ptend=<ptend>
+       [--profile=<profile>]
+
+Options:
+  -i --interactive  Run ipython shell
+  -h --help     Show this screen.
+  
+"""
+
+
 # import sys
 import argparse
+from docopt import docopt
+
 import os
 import imp
 import shelve
 import ROOT
+import pprint
 from AnalysisPython import LHCbStyle  # noqa
 
 from th import tools
@@ -21,19 +40,21 @@ from IPython import embed as shell
 def get_cli_args():
     parser = argparse.ArgumentParser(description='Process some integers.')
     parser.add_argument(
-        '--complete',  help='Show completion list', action='store_true')
+        '--complete', help='Show completion list', action='store_true')
     parser.add_argument(
-        '-i', "--interective",  help='Interective session',
+        '-i', "--interective", help='Interective session',
         action='store_true')
     parser.add_argument(
-        '--decay',  help='Decay name', choices=['ups', '1s', '2s', '3s'])
+        '--decay', help='Decay name', choices=['ups', '1s', '2s', '3s'])
     parser.add_argument(
-        '--year',  help='Show completion list',
+        '--profile', help='Update default properties')
+    parser.add_argument(
+        '--year', help='Show completion list',
         choices=['all', '2011', '2012'])
     parser.add_argument(
-        '--ptbegin',  help='Start p_T', type=int)
+        '--ptbegin', help='Start p_T', type=int)
     parser.add_argument(
-        '--ptend',  help='End p_T', type=int)
+        '--ptend', help='End p_T', type=int)
     return parser.parse_args()
 
 
@@ -96,13 +117,16 @@ def save(name, model, year, interval):
 
 
 def main():
+    cli_args = docopt(__doc__, version='v1.0')
+    shell()
+
     def fit():
         model.fitData()
         print(model)
 
         if cfg['save?']:
-            save(cfg['name'], model, cli_args.year,
-                (cli_args.ptbegin, cli_args.ptend))
+            save(cfg['name'], model, cli_args["--year"],
+                (int(cli_args["--ptbegin"]), int(cli_args["--ptend"])))
 
         if model.status:
             log.info("OK")
@@ -110,33 +134,33 @@ def main():
             log.err("BAD")
 
     log = Logger()
-    cli_args = get_cli_args()
-    if cli_args.complete:
+    # cli_args = get_cli_args()
+    if cli_args["--complete"]:
         complete()
         exit(0)
     tuples_cfg = get_cfg("tuples")
 
-    if cli_args.year in tuples_cfg:
-        tuples = [tuples_cfg[cli_args.year]]
+    if cli_args["--year"] in tuples_cfg:
+        tuples = [tuples_cfg[cli_args["--year"]]]
     else:  # all
         tuples = [tuples_cfg[year] for year in ['2011', '2012']]
 
-    cfg = get_cfg(cli_args.decay)
+    cfg = get_cfg(cli_args["--decay"])
     tree = ROOT.TChain(cfg["tree"])
     for file_name in tuples:
         tree.Add(os.path.join(get_data_root(), file_name))
 
-    fitter = get_fitter(cli_args.decay)
+    fitter = get_fitter(cli_args["--decay"])
 
     canvas = ROOT.TCanvas("c_fit",
                           "{year} {start}-{end} {name}".format(
-                              year=cli_args.year,
-                              start=cli_args.ptbegin,
-                              end=cli_args.ptend,
+                              year=cli_args["--year"],
+                              start=cli_args["--ptbegin"],
+                              end=cli_args["--ptend"],
                               name=cfg["name"])
                           )
     cut = cfg['cut']
-    cut["pt_ups"] = [cli_args.ptbegin, cli_args.ptend]
+    cut["pt_ups"] = [int(cli_args["--ptbegin"]), int(cli_args["--ptend"])]
 
     log.info("Cut: %s" % tools.cut_dict2str(cfg['cut']))
 
@@ -151,18 +175,24 @@ def main():
                                 field=cfg['field'],
                                 nbins=cfg['nbins'])
 
+    new_cfg = dict(cfg)
+    new_cfg.update(cfg['profiles'].get(cli_args["--profile"], {}))
+    del new_cfg["profiles"]
+
+    log.info("Profile:" + pprint.pformat(new_cfg, indent=2))
     model = fitter.prepare_model(
         canvas=canvas,
         data=data,
         interval=cfg['cut'][cfg['field']],
         nbins=cfg['nbins'],
         name=cfg['name'],
-        has_splot=cfg['splot?']
+        has_splot=cfg['splot?'],
+        profile=new_cfg
     )
 
     fit()
 
-    if cli_args.interective or not model.status:
+    if cli_args["--interactive"] or not model.status:
         shell()
 
 if __name__ == '__main__':

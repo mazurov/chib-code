@@ -12,18 +12,18 @@ from sh import gnome_terminal
 from th import tools
 # from th.log import Logger
 
-from IPython import embed as shell
+from IPython import embed as shell  # noqa
 
 
 def get_cli_args():
     parser = argparse.ArgumentParser(description='Process some integers.')
     parser.add_argument(
-        '--complete',  help='Show completion list', action='store_true')
+        '--complete', help='Show completion list', action='store_true')
     parser.add_argument(
-        '--year',  help='Show completion list',
+        '--year', help='Show completion list',
         choices=['all', '2011', '2012'])
     parser.add_argument(
-        '--profile',  help='Binning information')
+        '--profile', help='Binning information')
     return parser.parse_args()
 
 
@@ -64,8 +64,10 @@ def main():
             args += ["--tab-with-profile", "Tomorrow"]
             args += ["--title", "{0}-{1} {2}".format(bin[0], bin[1], year)]
             args += ["-e", get_script() +
-                     " {0} {1} {2} {3} {4}".format(sleep, cfg["decay"],
-                                                   year, bin[0], bin[1])
+                     " {0} {1} {2} {3} {4} {5}".format(sleep, cfg["decay"],
+                                                       year, bin[0], bin[1],
+                                                       cfg["profile"]
+                                                       )
                      ]
             sleep += 2
 

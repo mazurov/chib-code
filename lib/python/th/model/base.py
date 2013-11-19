@@ -20,6 +20,7 @@ class BaseModel(object):
         self.is_pull = is_pull
 
         self.chi2 = -1
+        self.chi2roofit = -1
         self.prob = 0
         self.fit = None
         self.frame = None
@@ -86,10 +87,11 @@ class BaseModel(object):
     def _plot(self):
         frame = self.frame
         self.curves()
-        self.pdf.plotOn(frame, ROOT.RooFit.LineColor(ROOT.kRed))
-        frame.drawAfter("model_Norm[%s]" % self.xfield, "h_ds")
-        frame.drawAfter("model_Norm[%s]_Comp[bg]" % self.xfield, "h_ds")
-        self.draw_after()
+        self.pdf.plotOn(frame, ROOT.RooFit.LineColor(
+            ROOT.kRed), ROOT.RooFit.DataError(1))
+        # frame.drawAfter("model_Norm[%s]" % self.xfield, "h_ds")
+        # frame.drawAfter("model_Norm[%s]_Comp[bg]" % self.xfield, "h_ds")
+        # self.draw_after()
 
         if self.is_pull:
             self.hpull = frame.pullHist("h_ds",
@@ -142,19 +144,20 @@ class BaseModel(object):
             frame.Draw()
 
     def _eval_chi2(self):
-        # pdf_name = "model_Norm[%s]" % self.xfield
+        pdf_name = "model_Norm[m_dtf]_Comp[exp_bg]"
 
         nbins = ROOT.gROOT.FindObject("h_ds").GetN()
-        # self.chi2 = self.frame.chiSquare(pdf_name, "h_ds",) * nbins
-        self.chi2 = self._chi2()
         self.ndf = nbins - len(self.fit.params())
+
+        self.chi2roofit = self.frame.chiSquare(len(self.fit.params()))
+        self.chi2 = self._chi2()
         self.chi2ndf = self.chi2 / self.ndf
         self.prob = ROOT.TMath.Prob(self.chi2, self.ndf)
 
     def _chi2(self):
         ret = 0
         for e in self.hpull:
-            ret += self.hpull[e][1]**2
+            ret += self.hpull[e][1] ** 2
         return ret
 
     def _fit_status(self):
@@ -174,7 +177,8 @@ class BaseModel(object):
             +
             [(p.GetName(), p.getVal()) for p in self.fit.constPars()]
             +
-            [("chi2", self.chi2), ("ndf", self.ndf),
+            [("chi2", self.chi2), ("chi2roofit", self.chi2roofit),
+             ("ndf", self.ndf),
              ("chi2ndf", self.chi2ndf), ("prob", self.prob),
              ("perbin", self.perbin)]
         )

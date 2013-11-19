@@ -3,8 +3,8 @@
     "unbinned?": true,
     "splot?": false,
     "field": "m_dtf",
-    "nbins": 250,
-    "name": "ups/v1",
+    "nbins": 500,
+    "name": "ups/v2",
     "save?": true,
 
     "cut": {
@@ -19,7 +19,9 @@
     },
 
     "profiles": {
-
+        "fits": {
+            "fixed_m1s": 9.456
+        }
     }
 
 }
